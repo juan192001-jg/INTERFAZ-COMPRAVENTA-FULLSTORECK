@@ -57,13 +57,13 @@
             </v-list-item-icon>
             <v-list-item-title>Almacén</v-list-item-title>
           </v-list-item>
-              <v-list-item :to="{ name:''}" >
+              <v-list-item :to="{ name:'categorias'}" >
             <v-list-item-icon>
               <v-icon>mdi-clipboard-list</v-icon>
             </v-list-item-icon>
             <v-list-item-title>Categoria</v-list-item-title>
           </v-list-item>
-          <v-list-item :to="{ name:''}">
+          <v-list-item :to="{ name:'articulos'}">
             <v-list-item-icon>
               <v-icon>mdi-view-list-outline</v-icon>
             </v-list-item-icon>
@@ -77,13 +77,13 @@
             </v-list-item-icon>
             <v-list-item-title>Compras</v-list-item-title>
           </v-list-item>
-          <v-list-item :to="{ name:'compras'}">
+          <v-list-item :to="{ name:'ingresos'}">
             <v-list-item-icon>
               <v-icon>mdi-store</v-icon>
             </v-list-item-icon>
             <v-list-item-title>Ingresos</v-list-item-title>
           </v-list-item>
-          <v-list-item :to="{ name:''}">
+          <v-list-item :to="{ name:'proveedores'}">
             <v-list-item-icon>
               <v-icon>mdi-account-group</v-icon>
             </v-list-item-icon>
@@ -97,13 +97,13 @@
             </v-list-item-icon>
             <v-list-item-title>Ventas</v-list-item-title>
           </v-list-item>
-          <v-list-item :to="{ name:''}">
+          <v-list-item :to="{ name:'ventas'}">
             <v-list-item-icon>
               <v-icon>mdi-cart-arrow-up</v-icon>
             </v-list-item-icon>
             <v-list-item-title>Ventas</v-list-item-title>
           </v-list-item>
-          <v-list-item :to="{ name:''}">
+          <v-list-item :to="{ name:'cliente'}">
             <v-list-item-icon>
               <v-icon>mdi-clipboard-account</v-icon>
             </v-list-item-icon>
@@ -117,7 +117,7 @@
             </v-list-item-icon>
             <v-list-item-title>Accesos</v-list-item-title>
           </v-list-item>
-          <v-list-item :to="{ name:''}">
+          <v-list-item :to="{ name:'usuarios'}">
             <v-list-item-icon>
               <v-icon>mdi-account-group</v-icon>
             </v-list-item-icon>
@@ -131,13 +131,13 @@
             </v-list-item-icon>
             <v-list-item-title>Consultas</v-list-item-title>
           </v-list-item>
-          <v-list-item :to="{ name:''}">
+          <v-list-item :to="{ name:'consultacompras'}">
             <v-list-item-icon>
               <v-icon>mdi-feature-search</v-icon>
             </v-list-item-icon>
             <v-list-item-title>Consultas Compras</v-list-item-title>
           </v-list-item>
-          <v-list-item >
+          <v-list-item :to="{ name:'consultaventas'}">
             <v-list-item-icon>
               <v-icon>mdi-feature-search</v-icon>
             </v-list-item-icon>
@@ -152,7 +152,7 @@
      
     
   </v-app>
-    <router-view /> 
+    
 </div>
 </template>
 
