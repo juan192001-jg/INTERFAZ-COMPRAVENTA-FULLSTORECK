@@ -14,3 +14,11 @@ new Vue({
     vuetify,
     render: h => h(App)
 }).$mount('#app')
+
+router.beforeEach((to, from, next) => {
+    if (!store.state.token && to.path != "/login") {
+        next("/login")
+    } else {
+        next();
+    }
+})

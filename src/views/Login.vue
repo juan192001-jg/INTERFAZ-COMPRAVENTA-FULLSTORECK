@@ -99,12 +99,22 @@ export default {
       axios.post("usuario/login",{email:this.email,password:this.pass})
       .then(response=>{
         this.$store.dispatch("setToken",response.data.token);
-        this.$router.push("/")
-        return console.log(response)
+        
+        this.$store.dispatch("Nombre",response.data.usuario.email);
+        this.$store.dispatch("usuario",response.data.usuario.nombre);
+        this.$store.dispatch("rol",response.data.usuario.rol);
+
+
+       
+this.$router.push("/")
+
+        
+        return console.log(response),console.log(response.data.usuario)
       }).catch((error)=>{
-        console.log(error.response)
+        console.log(error.response.mgs)
       })
     },
+   
   },
   
 };
