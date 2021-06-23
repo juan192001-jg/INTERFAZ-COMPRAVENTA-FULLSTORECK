@@ -2,14 +2,19 @@
  <div>
 
   <v-toolbar dark>
+    
 <v-toolbar-title>FullStoreck Welcome</v-toolbar-title>
 <v-spacer></v-spacer>
+<template v-if="this.$store.state.rol==='ADMIN_ROL' || this.$store.state.rol==='ALMACENISTA_ROL' || this.$store.state.rol==='VENDEDOR_ROL'">
+
 <v-btn @click="salir()" >
   <v-btn-icon>
      <v-icon>mdi-exit-to-app</v-icon>
   </v-btn-icon>
   Salir
 </v-btn>
+        </template>
+
 </v-toolbar>
 <v-app>
  <v-divider>
@@ -17,7 +22,7 @@
 </v-divider>
   
 <router-view /> 
-<template>
+<template v-if="this.$store.state.rol==='ADMIN_ROL' || this.$store.state.rol==='ALMACENISTA_ROL' || this.$store.state.rol==='VENDEDOR_ROL'">
       <v-navigation-drawer
         app
         permanent

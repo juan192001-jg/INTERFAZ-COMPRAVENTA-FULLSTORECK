@@ -1,9 +1,11 @@
 <template>
+
      <v-data-table
     :headers="headers"
-    :items="usuarios"
+    :items="Usuarios"
     sort-by="calories"
     class="elevation-1"
+    :search="search"
     dark
     
   >
@@ -11,7 +13,13 @@
       <v-toolbar
         flat
       >
-        <v-toolbar-title>Categorias </v-toolbar-title>
+        <v-toolbar-title>Usuarios <br><v-btn
+        color="primary"
+        @click="crearPDF()"
+      >
+        <v-icon>mdi-file-pdf-box</v-icon>
+        PDF
+      </v-btn></v-toolbar-title>
         <v-divider
           class="mx-4"
           inset
@@ -39,8 +47,7 @@
               v-bind="attrs"
               v-on="on"
             >
-              NUEVA CATEGORIA
-            </v-btn>
+              NUEVA CATEGORIA          </v-btn>
           </template>
           <v-card>
             <v-card-title >
@@ -66,16 +73,31 @@
                     md="4"
                   >
                     <v-text-field
-                      v-model="editedItem.descripcion"
-                      label="Descripcion"
+                      v-model="editedItem.email"
+                      label="Email"
                     ></v-text-field>
                   </v-col>
-                  <v-col
+                   <v-col
                     cols="12"
                     sm="6"
                     md="4"
                   >
-                  
+                    <v-select
+                      v-model="editedItem.rol"
+                      :items="roles"
+                      label="Rol"
+                    >
+                    </v-select>
+                  </v-col>
+                <v-col
+                    cols="12"
+                    sm="6"
+                    md="4"
+                  >
+                    <v-text-field
+                      v-model="editedItem.password"
+                      label="Contraceña"
+                    ></v-text-field>
                   </v-col>
                 
                 </v-row>
@@ -113,23 +135,33 @@
             </v-card-actions>
           </v-card>
         </v-dialog>
+        
       </v-toolbar>
     </template>
-    <template v-slot:[`item.actions`]="{ item }">
-      <v-icon
-        small
-        class="mr-2"
-        @click="editItem(item)"
-      >
-        mdi-pencil
-      </v-icon>
-      <v-icon
-        small
-        @click="deleteItem(item)"
-      >
-        mdi-delete
-      </v-icon>
+    <template v-slot:[`item.opciones`]="{ item }">
+      
+      <v-icon small class="mr-2" @click="editItem(item)"> mdi-pencil</v-icon>
+      <!-- <v-icon small @click="deleteItem(item)"> mdi-swap-horizontal-circle </v-icon> -->
+       <template v-if="item.esatdo">
+            <v-icon small @click="activarDesactivarMostrar(2, item)">
+             mdi-block-helper
+            </v-icon>
+          </template>
+          <template v-else>
+            <v-icon small @click="activarDesactivarMostrar(1, item)">
+              mdi-check
+            </v-icon>
+          </template>
+          
     </template>
+      <template v-slot:[`item.esatdo`]="{ item }">
+          <div v-if="item.esatdo===1">
+            <span class="white--text">Activo</span>
+          </div>
+          <div v-else>
+            <span class="red--text">Inactivo</span>
+          </div>
+        </template>
     <template v-slot:no-data>
       <v-btn
         color="primary"
@@ -141,16 +173,26 @@
   </v-data-table>
 </template>
 <script>
+import jsPDF from 'jspdf'
+import 'jspdf-autotable'
 import axios from 'axios'
     export default {
         data() {
       
             return {
+              bd:0,
+              id:'',
+      search:"",
       dialog: false,
       dialogDelete: false,
-     usuarios:[],
+      Usuarios:[],
+      roles:[{value:'VENDEDOR_ROL'},{value:'ADMIN_ROL'},{value:'ALMACENISTA_ROL'}],
       nombre:'',
-      descripcion:'',
+      email:'',
+      rol:'',
+      password:'',
+      editedIndex:-1,
+      
                 
         headers: [
         {
@@ -159,17 +201,20 @@ import axios from 'axios'
           sortable: false,
           value: 'nombre',
         },
+      
         { text: 'Email', value: 'email' },
         { text: 'Rol', value: 'rol' },
         { text: 'Estado', value: 'esatdo' },
+        {text:'Opciones',value:'opciones',sortable:false}
       
       ], 
       editedItem: {
         nombre: '',
+        estado: 0,
         email:'',
         rol:'',
-        estado: 0,
-        
+        password:'',
+      
       },
             }
 
@@ -183,14 +228,71 @@ import axios from 'axios'
                   axios.get("usuario",header)
                   .then((response)=>{
                       console.log(response.data.usuarios)
-                      this.usuarios=response.data.usuarios
+                      this.Usuarios=response.data.usuarios
                   })
                   .catch((error)=>{
                       console.log(error.response)
                   });
 
           
+              },crearPDF() {
+      var columns = [
+        { title: 'Email', dataKey: 'email' },
+        { title: 'Rol', dataKey: 'rol' },
+        { title:'Estado',
+        dataKey: 'estado' 
+         },
+      ];
+      var rows = [];
+
+      this.Usuarios.map(function (x) {
+        rows.push({
+        nombre: x.nombre,
+        email:x.email,
+        rol:x.rol,
+        estado: x.esatdo,
+        });
+      });
+      var doc = new jsPDF("p","pt");
+      doc.autoTable(columns, rows, {
+        margin: { top: 60 },
+        addPageContent: function () {
+          doc.text("Lista de Usuarios", 40, 30);
+        },
+      });
+
+      doc.save("Usuarios.pdf");
+    },
+              activarDesactivarMostrar(accion,item) {
+                let id=item._id
+
+                if (accion==2) {
+                  let me=this
+                  let header = {headers :{"token": this.$store.state.token}};
+                  axios.put(`usuario/desactivar/${id}`,{esatdo:0},header) 
+                  .then(function() {
+                    me.listarUsuarios();
+                  }) 
+                  .catch(function (error){
+                    console.log(error)
+                  })
+                }else if (accion==1) {
+                  let me=this
+                  let header = {headers :{"token": this.$store.state.token}};
+                  axios.put(`usuario/activar/${id}`,{esatdo:1},header) 
+                  .then(function() {
+                    me.listarUsuarios();
+                  }) 
+                  .catch(function (error){
+                    console.log(error)
+                  })
+                }
+
               },
+              computed: {
+        formTitle() {
+          return this.editedIndex === -1 ? "Nuevo registro" : "Editar registro";},
+    },
               watch: {
             dialog (val) {
             val || this.close()
@@ -201,21 +303,83 @@ import axios from 'axios'
             },
         close() {
         this.dialog = false
+        this.limpiar();
         this.$nextTick(() => {
         this.editedItem = Object.assign({}, this.defaultItem)
         this.editedIndex = -1
+        
         })
   },
   save(){
-    let header = {headers :{"token": this.$store.state.token}};
-     axios.post("categoria",header,this.categoria={nombre:this.editedItem.nombre,descripcion:this.editedItem.descripcion})
+    if (this.bd==0) {
+      console.log('guardando',this.bd,this.id)
+       let me = this
+  let header={headers:{"token":this.$store.state.token}}  
+        axios
+          .post("usuario", {
+           nombre:this.editedItem.nombre,
+          email:this.editedItem.email,
+          rol:this.editedItem.rol,
+          password:this.editedItem.password,
+          },header)
+          .then(function () {
+          me.listarUsuarios();
+          me.limpiar();  
+          me.close();
+           
+          })
+          .catch(function (error) {
+            console.log(error);
+          });
+    }else{
+      let me = this
+      console.log('editando',this.bd,this.id)
+
+       let header={headers:{"token":this.$store.state.token}}  
+        axios
+          .put(`usuario/${this.id}`, {
+           nombre:this.editedItem.nombre,
+          email:this.editedItem.email,
+          rol:this.editedItem.rol,
+          password:this.editedItem.password,
+          },header)
+          .then(function () {
+          me.listarUsuarios();
+          me.close();
+          me.limpiar();  
+           
+          })
+          .catch(function (error) {
+            console.log(error);
+          });
+
+    }
    
+
     
-     }
-
-
-
-
+     },
+    editItem(item) {
+this.bd=1,
+this.id=item._id,
+this.editedItem.nombre=item.nombre,
+this.editedItem.email=item.email
+this.editedItem.password=''
+this.editedItem.rol=item.rol
+this.editedIndex = -1;
+this.dialog=true
+    },
+      limpiar() {
+      this.bd=""; 
+      this.id=""
+      this._id = "";
+      this.nombre = "";
+      this.password= "";
+      this.rol="",
+      this.email="",
+      this.valida = 0;
+      this.validaMensaje = [];
+      this.editedIndex = -1;
+    },
 
         },
     };

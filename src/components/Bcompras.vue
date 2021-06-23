@@ -1,6 +1,6 @@
 <template>
     <div>
-        <h1>soy el componevte compras bauqueda </h1>
+        <h1> COMPONECTE EN DESARROLLO </h1>
     </div>
 </template>
 

@@ -1,9 +1,11 @@
 <template>
+
      <v-data-table
     :headers="headers"
     :items="categorias"
     sort-by="calories"
     class="elevation-1"
+    :search="search"
     dark
     
   >
@@ -11,7 +13,13 @@
       <v-toolbar
         flat
       >
-        <v-toolbar-title>Categorias </v-toolbar-title>
+        <v-toolbar-title>Categorias  <br><v-btn
+        color="primary"
+        @click="crearPDF()"
+      >
+        <v-icon>mdi-file-pdf-box</v-icon>
+        PDF
+      </v-btn> </v-toolbar-title>
         <v-divider
           class="mx-4"
           inset
@@ -39,8 +47,7 @@
               v-bind="attrs"
               v-on="on"
             >
-              NUEVA CATEGORIA
-            </v-btn>
+              NUEVA CATEGORIA          </v-btn>
           </template>
           <v-card>
             <v-card-title >
@@ -74,9 +81,19 @@
                     cols="12"
                     sm="6"
                     md="4"
+                    v-show="valida"
+                  ><div
+                  class="red--text"
+                  v-for="v in validaMensaje"
+                  :key="v"
+                  v-text="v"
                   >
+                    
+
+                  </div>
                   
                   </v-col>
+                  
                 
                 </v-row>
               </v-container>
@@ -113,23 +130,33 @@
             </v-card-actions>
           </v-card>
         </v-dialog>
+        
       </v-toolbar>
     </template>
     <template v-slot:[`item.opciones`]="{ item }">
-      <v-icon
-        small
-        class="mr-2"
-        @click="editItem(item)"
-      >
-        mdi-pencil
-      </v-icon>
-      <v-icon
-        small
-        @click="deleteItem(item)"
-      >
-        mdi-delete
-      </v-icon>
+      
+      <v-icon small class="mr-2" @click="editItem(item)"> mdi-pencil</v-icon>
+      <!-- <v-icon small @click="deleteItem(item)"> mdi-swap-horizontal-circle </v-icon> -->
+       <template v-if="item.estado">
+            <v-icon small @click="activarDesactivarMostrar(2, item)">
+             mdi-block-helper
+            </v-icon>
+          </template>
+          <template v-else>
+            <v-icon small @click="activarDesactivarMostrar(1, item)">
+              mdi-check
+            </v-icon>
+          </template>
+          
     </template>
+      <template v-slot:[`item.estado`]="{ item }">
+          <div v-if="item.estado===1">
+            <span class="white--text">Activo</span>
+          </div>
+          <div v-else>
+            <span class="red--text">Inactivo</span>
+          </div>
+        </template>
     <template v-slot:no-data>
       <v-btn
         color="primary"
@@ -141,11 +168,18 @@
   </v-data-table>
 </template>
 <script>
+import jsPDF from 'jspdf'
+import 'jspdf-autotable'
 import axios from 'axios'
     export default {
         data() {
       
             return {
+              valida:0,
+              validaMensaje:[],
+              bd:0,
+              id:'',
+      search:"",
       dialog: false,
       dialogDelete: false,
       categorias:[],
@@ -189,7 +223,85 @@ import axios from 'axios'
                   });
 
           
+              },  crearPDF() {
+      var columns = [
+      
+        {
+          title:'Nombre',
+          
+         dataKey: 'nombre',
+        }, 
+        { title:'Descripcion',
+        dataKey: 'descripcion'
+        },
+        { title:'Estado',
+        dataKey: 'estado' 
+         },
+      ];
+      var rows = [];
+
+      this.categorias.map(function (x) {
+        rows.push({
+          nombre: x.nombre,
+          descripcion: x.descripcion,
+          estado: x.estado,
+        });
+      });
+      var doc = new jsPDF("p","pt");
+      doc.autoTable(columns, rows, {
+        margin: { top: 60 },
+        addPageContent: function () {
+          doc.text("Lista de Categorias", 40, 30);
+        },
+      });
+
+      doc.save("Categorias.pdf");
+    },
+              validar(){
+                this.valida=0
+                this.validaMensaje=[]
+                if (this.nombre.length >1 || this.nombre.length <50) {
+                  this.validaMensaje.push('El nombre de la categoria debe tener entre 1-50 carateres')
+                }
+                 if (this.descripcion.length >1 || this.descripcion.length <225) {
+                  this.validaMensaje.push('La descripciono debe tener entre 1  y 225 caracteres')
+                  
+                } if (this.validaMensaje.length) {
+                  this.valida=1
+                  
+                }
+                return this.valida
               },
+              activarDesactivarMostrar(accion,item) {
+                let id=item._id
+
+                if (accion==2) {
+                  let me=this
+                  let header = {headers :{"token": this.$store.state.token}};
+                  axios.put(`categoria/desactivar/${id}`,{estado:0},header) 
+                  .then(function() {
+                    me.listarCategorias();
+                  }) 
+                  .catch(function (error){
+                    console.log(error)
+                  })
+                }else if (accion==1) {
+                  let me=this
+                  let header = {headers :{"token": this.$store.state.token}};
+                  axios.put(`categoria/activar/${id}`,{estado:1},header) 
+                  .then(function() {
+                    me.listarCategorias();
+                  }) 
+                  .catch(function (error){
+                    console.log(error)
+                  })
+                }
+
+              },
+              computed: {
+        formTitle() {
+          return this.editedIndex === -1 ? "Nuevo registro" : "Editar registro";},
+    },
               watch: {
             dialog (val) {
             val || this.close()
@@ -200,27 +312,73 @@ import axios from 'axios'
             },
         close() {
         this.dialog = false
+          this.limpiar();  
         this.$nextTick(() => {
         this.editedItem = Object.assign({}, this.defaultItem)
         this.editedIndex = -1
         })
   },
   save(){
-    let header = {headers :{"token": this.$store.state.token}};
-     axios.post("categoria",header,this.categoria={nombre:this.editedItem.nombre,descripcion:this.editedItem.descripcion})
-      .then(response=>{
-        this.$router.push("/categoria")
-        return console.log(response)
-        
-      }).catch((error)=>{
-        console.log(error)
-      })
+   
+    if (this.bd==0) {
+      console.log('guardando',this.bd,this.id)
+       let me = this
+  let header={headers:{"token":this.$store.state.token}}  
+        axios
+          .post("categoria", {
+            nombre: this.editedItem.nombre,
+            descripcion: this.editedItem.descripcion,
+          },header)
+          .then(function () {
+          me.listarCategorias();
+          me.limpiar();  
+          me.close();
+           
+          })
+          .catch(function (error) {
+            console.log(error);
+          });
+    }else{
+      let me = this
+      console.log('editando',this.bd,this.id)
+
+       let header={headers:{"token":this.$store.state.token}}  
+        axios
+          .put(`categoria/${this.id}`, {
+            nombre: this.editedItem.nombre,
+            descripcion: this.editedItem.descripcion,
+          },header)
+          .then(function () {
+         me.listarCategorias();
+          me.limpiar();  
+          me.close();
+          })
+          .catch(function (error) {
+            console.log(error);
+          });
+
+    }
+   
+
     
-     }
-
-
-
-
+     },
+    editItem(item) {
+this.bd=1,
+this.id=item._id,
+this.editedItem.nombre=item.nombre,
+this.editedItem.descripcion=item.descripcion
+this.dialog=true
+    },
+      limpiar() {
+      this.bd=""; 
+      this.id=""
+      this._id = "";
+      this.nombre = "";
+      this.descripcion = "";
+      this.valida = 0;
+      this.validaMensaje = [];
+      this.editedIndex = -1;
+    },
 
         },
     };

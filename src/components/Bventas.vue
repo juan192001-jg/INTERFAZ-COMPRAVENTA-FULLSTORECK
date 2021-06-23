@@ -1,6 +1,6 @@
 <template>
     <div>
-        <h1>soy elcomponecte busqueda ventas</h1>
+        <h1>CONPONECTE EN DESARROLLO</h1>
     </div>
 </template>
 
