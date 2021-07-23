@@ -1,6 +1,6 @@
 <template>
 
-     <v-data-table
+  <v-data-table
     :headers="headers"
     :items="Ventas"
     sort-by="calories"
@@ -65,7 +65,7 @@
                   >
                      <v-select
                       v-model="editedItem.usuario"
-                      :items="usuarios"
+                      :items="Usuarios"
                       label="Usuarios"
                     >
                     </v-select>
@@ -99,6 +99,7 @@
                     md="4"
                   >
                   <v-text-field
+                  type="number"
                       v-model="editedItem.numeroComprobante"
                       label="Numero comprobante"
                   ></v-text-field>
@@ -108,11 +109,12 @@
                     sm="6"
                     md="4"
                   >
-                  
                   <v-text-field
+                  type="number"
                       v-model="editedItem.impuesto"
-                      label="Impuesto"
+                      label="impuesto"
                   ></v-text-field>
+                  
                   </v-col>
                      <v-col
                     cols="12"
@@ -120,6 +122,7 @@
                     md="4"
                   >
                   <v-text-field
+                  type="number"
                       v-model="editedItem.total"
                       label="Total"
                   ></v-text-field>
@@ -192,7 +195,7 @@
           <v-btn
             color="primary"
             
-            @click="dialog1 = false"
+            @click="close2"
           >
             Guardar
           </v-btn>
@@ -221,7 +224,7 @@
       </v-text-field>
     </v-card-title>
     <v-data-table
-      :headers="headers3"
+      :headers="headers1"
       :items="selected"
       :search="search"
     ></v-data-table>
@@ -243,7 +246,7 @@
               <v-btn
                 color="blue darken-1"
                 text
-                @click="save()"
+                @click="close()"
               >
                 Guardar
               </v-btn>
@@ -251,17 +254,7 @@
           </v-card>
         </v-dialog>
         
-        <v-dialog v-model="dialogDelete" max-width="500px">
-          <v-card>
-            <v-card-title class="headline">Are you sure you want to delete this item?</v-card-title>
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-btn color="blue darken-1" text @click="closeDelete">Cancel</v-btn>
-              <v-btn color="blue darken-1" text @click="deleteItemConfirm">OK</v-btn>
-              <v-spacer></v-spacer>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
+        
         
       </v-toolbar>
     </template>
@@ -281,6 +274,9 @@
           </template>
           
     </template>
+  
+          
+
       <template v-slot:[`item.estado`]="{ item }">
           <div v-if="item.estado===1">
             <span class="white--text">Activo</span>
@@ -305,22 +301,21 @@ import 'jspdf-autotable'
 import axios from 'axios'
     export default {
         data() {
-          
       
             return {
-              bd:0,
-            singleSelect: false,
-            selected: [],
-            usuarios:[],
-            search:"",
-            dialog1: false,
-            dialog: false,
-            dialogDelete: false,
-            Ventas:[],
-            comprovante:['FACTURA','NOTA DEVITO','NOTA CREDITO'],
-            cliente:[],
-            articulos:[],
-          usuario:'',
+              selected:[],
+              
+              Usuarios:[],
+              Ventas:[],
+      search:"",
+      dialog: false,
+      dialog1: false,
+      dialogDelete: false,
+      ingresos:[],
+      comprovante:['FACTURA','NOTA DEVITO','NOTA CREDITO'],
+      cliente:[],
+      articulos:[],
+        usuario:'',
         persona: '',
         tipoComprobante:'',
         serieComprobante:'',
@@ -328,94 +323,34 @@ import axios from 'axios'
         detalle:[],
         impuesto:'',
         total:'',
-           
-            headers1: [
-            {
-            text: 'id',
-            align: 'start',
-            sortable: false,
-            value: '_id',
-          },  
-           { text: 'Codigo',
-         value: 'codigo'
-        },
-        {
-          text: 'Nombre',
-          align: 'start',
-          sortable: false,
-          value: 'nombre',
-        },
-         { text: 'Descripcion',
-         value: 'descripcion'
-        }, 
-        { text: 'Precio',
-         value: 'precioventa'
-        },
-        { text: 'Categoria',
-         value: 'categoria.nombre'
-        },
-          { text: 'Stock',
-         value: 'stock' 
-         },
-        { text: 'Estado',
-         value: 'estado' 
-         },
-        {text:'Opciones',value:'opciones',sortable:false}
+        bd:0,
+      // numeroComprobante,
+      // persona,
+      // serieComprobante,
+      // serieComprobante,
+      // usuario,
+      // detalles,
+  headers1: [
+           { text: 'Codigo',value: 'codigo' },
+           {text: 'Nombre',align: 'start',sortable: false,value: 'nombre',}, 
+           { text: 'Precio',value: 'precioventa' },
+          { text: 'Stock',value: 'stock' },
 
-      
-      
-      ], headers3: [
-        {
-          text: '_id',
-         
-            value: '_id',
-          },
-        {
-          text: 'Articulo',
-          align: 'start',
-          sortable: false,
-          value: 'articulo',
-        },
-       
-        { text: 'Precio',
-         value: 'precio'
-        },
-
-           { text: 'Descuento',
-         value: 'descuento'
-        }, {
-          text:'Cantidad',
-         value:'cantidad'
-
-        },
-        {
-          text:'Sub Total',
-          // llenar
-          value:'total'
-
-        },
-     
-     
-      ], 
-                
+  ], 
         headers: [
-        {
-          text: 'Usuario',
-          align: 'start',
-          sortable: false,
-          value: 'usuario.rol',
-        },
+       
+        { text: 'Usuario', value: 'usuario.rol' },
         { text: 'Persona', value: 'persona.tipoPersona' },
-        { text: 'Tipo de Comprobante ', value: 'tipoComprobante' },
-        { text: 'Serie de Comprobante ', value: 'serieComprobante' },
-        { text: 'Numero de Comprobante ', value: 'numeroComprobante' },
-        { text: 'Total', value: 'total' },
-        { text: 'Impuesto', value: 'impuesto' },
+        { text: 'Tipo Comprobante', value: 'tipoComprobante' },
+        { text: 'Serie Comprobante ', value: 'serieComprobante' },
+        { text: 'Numero Comprobante ', value: 'numeroComprobante' },  
+        { text: 'Fecha', value: 'createtAt' },
+        
         { text: 'Estado', value: 'estado' },
-        {text:'Opciones',value:'opciones',sortable:false}
+     {text:'Opciones',value:'opciones',sortable:false},
       
       ], 
-      editedItem: {
+        editedItem: {
         usuario:'',
         persona: '',
         tipoComprobante:'',
@@ -423,75 +358,29 @@ import axios from 'axios'
         numeroComprobante:'',
         impuesto:'',
         total:'',
-        selected:[],
-        detalle:[]
-      
-    
-       
-        
       },
             }
 
         }, 
         created() {
-          this.selcionarArticulo();
+            // this.listarIngresos()
+            this.selcionarArticulo();
             this.listarVentas();
             this.selecionarCliente();
             this. selecinarUsuarios();
         },
         methods: {
-          crearPDF() {
-      var columns = [
-        { title: 'Usuario', dataKey: 'usuario' },
-        { title: 'Persona', dataKey: 'persona' },
-        { title: 'Tipo de Comprobante ', dataKey: 'tipoComprobante' },
-        { title: 'Serie de Comprobante ', dataKey: 'serieComprobante' },
-        { title: 'Numero de Comprobante ', dataKey: 'numeroComprobante' },
-        { title: 'Total', dataKey: 'total' },
-        { title: 'Impuesto', dataKey: 'impuesto' },
-        { title: 'articulo', dataKey: 'detalles' },
-        { title: 'Estado', dataKey: 'estado' },
-       
-      ];
-      var rows = [];
-
-      this.Ventas.map(function (x) {
-        rows.push({
-        
-        usuario:x.usuario.rol,
-        persona: x.persona.tipoPersona,
-        tipoComprobante:x.tipoComprobante,
-        serieComprobante:x.serieComprobante,
-        numeroComprobante:x.numeroComprobante,
-        impuesto:x.impuesto,
-        total:x.total,
-        estado: x.estado,
-        detalles:x.detalles.articulo
-
-        });
-      });
-      var doc = new jsPDF("p","pt");
-      doc.autoTable(columns, rows, {
-        margin: { top: 60 },
-        addPageContent: function () {
-          doc.text("Lista de Ventas", 40, 30);
-        },
-      });
-
-      doc.save("Ventas.pdf");
-    },
           selecinarUsuarios() {
-            let arrayUsuarios=[]
-            let me =this 
+            let usariosArrray=[];
+            let me =this
                   let header = {headers :{"token": this.$store.state.token}};
                   axios.get("usuario",header)
                   .then((response)=>{
-                      
-                      arrayUsuarios=response.data.usuarios
-                       arrayUsuarios.map(function (x) {
-                     me.usuarios.push({ text:x.nombre , value:x._id });
-                     });
-
+                      console.log(response.data.usuarios)
+                     usariosArrray=response.data.usuarios
+                     usariosArrray.map(function (x) {
+                       me.Usuarios.push({text: x.nombre , value: x._id})
+                     })
 
                   })
                   .catch((error)=>{
@@ -500,11 +389,24 @@ import axios from 'axios'
 
           
               },
-           selecionarCliente() {
+              listarIngresos() {
+                  let header = {headers :{"token": this.$store.state.token}};
+                  axios.get("ingreso",header)
+                  .then((response)=>{
+                      console.log(response.data.compras)
+                      this.ingresos=response.data.compras
+                  })
+                  .catch((error)=>{
+                      console.log(error.response)
+                  });
+
+          
+              },
+               selecionarCliente() {
              let me = this
              let clienteArray = [];
                   let header = {headers :{"token": this.$store.state.token}};
-                  axios.get("persona/listCliente/?value=CLIENTE",header)
+                  axios.get("persona/listCliente/?value=PROVEEDOR",header)
                   .then((response)=>{
                     clienteArray = response.data.persona;
                       clienteArray.map(function (x) {
@@ -518,15 +420,13 @@ import axios from 'axios'
                   });
 
           
-              },selcionarArticulo(){
-                let me =this
-               
-                  let header = {headers :{"token": this.$store.state.token}};
+              },
+              selcionarArticulo(){
+                   let header = {headers :{"token": this.$store.state.token}};
                   axios.get("articulo",header)
                   .then((response)=>{
-                    me.articulos=response.data.articulos
-                     
-                   
+                      console.log(response.data.articulos)
+                      this.articulos=response.data.articulos
                   })
                   .catch((error)=>{
                       console.log(error.response)
@@ -534,14 +434,14 @@ import axios from 'axios'
               },
               listarVentas() {
                   let header = {headers :{"token": this.$store.state.token}};
-                  axios.get("Venta",header)
+                  axios.get("venta",header)
                   .then((response)=>{
                       console.log(response.data.ventas.usuario)
                       this.Ventas=response.data.ventas
-                      this.detalle=response.data.ventas.detalles
-                      this.detalle.map(function(x){
-                        this.selected.push({nombre:x.articulo,precioventa:x.precio})
-                      })
+                      // this.detalle=response.data.ventas.detalles
+                      // this.detalle.map(function(x){
+                      //   this.selected.push({nombre:x.articulo,precioventa:x.precio})
+                      // })
                   })
                   .catch((error)=>{
                       console.log(error.response)
@@ -553,6 +453,7 @@ import axios from 'axios'
                 let id=item._id
 
                 if (accion==2) {
+               
                   let me=this
                   let header = {headers :{"token": this.$store.state.token}};
                   axios.put(`venta/desactivar/${id}`,{estado:0},header) 
@@ -587,7 +488,12 @@ import axios from 'axios'
             val || this.closeDelete()
             },
             },
+            close2(){
+this.dialog1=false
+            },
         close() {
+          this.dialog1=false
+          this.dialog2=false
         this.dialog = false
         this.$nextTick(() => {
         this.editedItem = Object.assign({}, this.defaultItem)
@@ -596,58 +502,83 @@ import axios from 'axios'
   },
   save(){
     if (this.bd==0) {
-         let me = this
-    let arrayventas=this.selected
-    arrayventas.map(function (x) {
-                     me.detalles.push({ _id:x._id ,articulo:x.nombre,precio:x.precioventa });
-                     });
-        console.log(this.detalles) 
-                   
-
+       let me = this
   let header={headers:{"token":this.$store.state.token}}  
         axios
           .post("venta", {
-        usuario:this.usuario,
-        persona:this.persona,
-        tipoComprobante:this.tipoComprobante,
-        serieComprobante:this.serieComprobante,
-        numeroComprobante:this.numeroComprobante,
-        // detalles:this.detalles,
-        impuesto:this.impuesto,
-        total:this.total
-
+            nombre: this.nombre,
+            descripcion: this.descripcion,
           },header)
-          console.log(this.usuario) 
           .then(function () {
            me.limpiar();
             me.close();
             me.listarVentas();
           })
           .catch(function (error) {
-            console.log(error.msg);
-          }); 
+            console.log(error);
+            me.close()
+          });
     }else{
- this.editedItem()
+ console.log('mostrando');
     }
-
-
-    
-     },
-     editItem(item){
-       this.bd=1
-        this.editedItem.usuario=item.usuario._id,
-        this.editedItem.persona=item.persona._id,
-        this.editedItem.tipoComprobante=item.tipoComprobante,
-        this.editedItem.serieComprobante=item.serieComprobante,
-        this.editedItem.numeroComprobante=item.numeroComprobante,
-        this.editedItem.impuesto=item.impuesto,
-        this.editedItem.total=item.total
-        this.editedItem.detalle=item.detalle
    
-this.dialog=true
 
-     },
     
+     },
+      crearPDF() {
+      var columns = [
+        //PDF
+        { title: 'Usuario', dataKey: 'usuario' },
+        { title: 'Persona', dataKey: 'persona' },
+        { title: 'Tipo de Comprobante ', dataKey: 'tipoComprobante' },
+        { title: 'Serie de Comprobante ', dataKey: 'serieComprobante' },
+        { title: 'Numero de Comprobante ', dataKey: 'numeroComprobante' },
+        { title: 'Total', dataKey: 'total' },
+        { title: 'Impuesto', dataKey: 'impuesto' },
+        { title: 'articulo', dataKey: 'detalles' },
+        { title: 'Estado', dataKey: 'estado' },
+       
+      ];
+      var rows = [];
+
+      this.ingresos.map(function (x) {
+        rows.push({
+        
+        usuario:x.usuario.rol,
+        persona: x.persona.tipoPersona,
+        tipoComprobante:x.tipoComprobante,
+        serieComprobante:x.serieComprobante,
+        numeroComprobante:x.numeroComprobante,
+        impuesto:x.impuesto,
+        total:x.total,
+        estado: x.estado,
+        detalles:x.detalles.articulo
+
+        });
+      });
+      var doc = new jsPDF("p","pt");
+      doc.autoTable(columns, rows, {
+        margin: { top: 60 },
+        addPageContent: function () {
+          doc.text("Lista de ingresos", 40, 30);
+        },
+      });
+
+      doc.save("Ingresos.pdf");
+    },
+    editItem(item){
+      this.bd=1,
+      this.editedItem.usuario=item.usuario._id,
+         this.editedItem.persona=item.persona,
+         this.editedItem.tipoComprobante=item.tipoComprobante,
+        this.editedItem. serieComprobante=item.serieComprobante,
+         this.editedItem.numeroComprobante=item.numeroComprobante,
+         this.editedItem.impuesto=item.impuesto,
+        this.editedItem.total=item.total,
+        this.editedIndex=-1;
+        this.dialog=true
+    },
+
       limpiar() {
       this._id = "";
       this.nombre = "";
@@ -655,7 +586,8 @@ this.dialog=true
       this.valida = 0;
       this.validaMensaje = [];
       this.editedIndex = -1;
-    },
+    },   
+   
 
         },
     };
